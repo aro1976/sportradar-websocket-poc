@@ -47,7 +47,7 @@ export class InfraStack extends cdk.Stack {
 
     const redis = new elasticache.CfnCacheCluster(this, 'Redis', {
       engine: 'redis',
-      cacheNodeType: 'cache.t4g.micro',
+      cacheNodeType: 'cache.t4g.small',
       numCacheNodes: 1,
       vpcSecurityGroupIds: [redisSg.securityGroupId],
       cacheSubnetGroupName: redisSubnetGroup.ref,
@@ -99,8 +99,8 @@ export class InfraStack extends cdk.Stack {
 
     // WebSocket Service
     const wsTaskDef = new ecs.FargateTaskDefinition(this, 'WsTask', {
-      cpu: 1024,
-      memoryLimitMiB: 2048,
+      cpu: 2048,
+      memoryLimitMiB: 4096,
     });
 
     wsTaskDef.addContainer('wsserver', {
@@ -116,7 +116,7 @@ export class InfraStack extends cdk.Stack {
     const wsService = new ecs.FargateService(this, 'WsService', {
       cluster,
       taskDefinition: wsTaskDef,
-      desiredCount: 3,
+      desiredCount: 6,
       securityGroups: [ecsSg],
       assignPublicIp: true,
       vpcSubnets: subnetSelection,
@@ -144,7 +144,7 @@ export class InfraStack extends cdk.Stack {
     });
 
     // Auto-scaling
-    const scaling = wsService.autoScaleTaskCount({ minCapacity: 3, maxCapacity: 10 });
+    const scaling = wsService.autoScaleTaskCount({ minCapacity: 6, maxCapacity: 15 });
     scaling.scaleOnCpuUtilization('CpuScaling', { targetUtilizationPercent: 60 });
 
     // Outputs

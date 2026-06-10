@@ -2,7 +2,7 @@ import ws from 'k6/ws';
 import { check, sleep } from 'k6';
 import { Counter, Trend } from 'k6/metrics';
 
-const wsUrl = __ENV.WS_URL || 'ws://localhost:8080/ws';
+const wsUrl = __ENV.WS_URL || 'ws://WebSoc-NLB55-FBqc5kImJlPf-7f13f5caa3b8794f.elb.sa-east-1.amazonaws.com/ws';
 const matchId = __ENV.MATCH_ID || 'sr:sport_event_id:67644872';
 
 const messagesReceived = new Counter('ws_messages_received');
