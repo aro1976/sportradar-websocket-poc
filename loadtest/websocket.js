@@ -10,12 +10,11 @@ const messageLatency = new Trend('ws_message_latency_ms');
 
 export const options = {
   stages: [
-    { duration: '30s', target: 1000 },
-    { duration: '30s', target: 10000 },
-    { duration: '1m', target: 50000 },
-    { duration: '1m', target: 100000 },
-    { duration: '2m', target: 100000 }, // sustained
-    { duration: '30s', target: 0 },
+    { duration: '1m', target: 1000 },
+    { duration: '2m', target: 5000 },
+    { duration: '3m', target: 10000 },
+    { duration: '3m', target: 10000 }, // sustained
+    { duration: '1m', target: 0 },
   ],
   thresholds: {
     ws_message_latency_ms: ['p(99)<1000'],
@@ -45,7 +44,7 @@ export default function () {
     socket.on('error', () => {});
 
     // Keep connection open for the duration of the VU iteration
-    sleep(10);
+    sleep(30);
     socket.close();
   });
 
