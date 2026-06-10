@@ -1,0 +1,39 @@
+{
+  "dashboard": {
+    "title": "WebSocket PoC - Live Metrics",
+    "panels": [
+      {
+        "title": "Active Connections",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
+        "targets": [{"expr": "sum(ws_connections_active)", "legendFormat": "connections"}]
+      },
+      {
+        "title": "Messages Sent/s",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 0},
+        "targets": [{"expr": "sum(rate(ws_messages_sent_total[1m]))", "legendFormat": "msg/s"}]
+      },
+      {
+        "title": "Fan-out Latency (p99)",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 0},
+        "targets": [{"expr": "histogram_quantile(0.99, rate(ws_fanout_latency_seconds_bucket[1m]))", "legendFormat": "p99"}]
+      },
+      {
+        "title": "Connections per Server",
+        "type": "graph",
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 6},
+        "targets": [{"expr": "ws_connections_active", "legendFormat": "{{instance}}"}]
+      },
+      {
+        "title": "Fan-out Latency Distribution",
+        "type": "heatmap",
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 6},
+        "targets": [{"expr": "rate(ws_fanout_latency_seconds_bucket[1m])", "legendFormat": "{{le}}"}]
+      }
+    ],
+    "time": {"from": "now-5m", "to": "now"},
+    "refresh": "5s"
+  }
+}

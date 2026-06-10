@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Odds - WebSocket PoC</title>
+    <style>
+        body { font-family: system-ui; background: #1a1a2e; color: #eee; margin: 0; padding: 20px; }
+        h1 { color: #0f9; margin-bottom: 5px; }
+        .status { padding: 8px 12px; border-radius: 4px; display: inline-block; margin-bottom: 20px; }
+        .connected { background: #0a3; }
+        .disconnected { background: #a00; }
+        .odds-container { display: flex; gap: 20px; flex-wrap: wrap; }
+        .market { background: #16213e; border-radius: 8px; padding: 20px; min-width: 300px; }
+        .market h2 { margin: 0 0 15px; color: #0cf; font-size: 1.1em; }
+        .outcomes { display: flex; gap: 10px; }
+        .outcome { background: #0e1a30; border: 1px solid #234; border-radius: 6px; padding: 12px 20px; text-align: center; flex: 1; transition: background 0.3s; }
+        .outcome.flash { background: #1a4a2a; }
+        .outcome .name { font-size: 0.8em; color: #888; text-transform: uppercase; }
+        .outcome .odds { font-size: 1.8em; font-weight: bold; color: #0f9; }
+        .log { margin-top: 20px; background: #0e1a30; border-radius: 8px; padding: 15px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85em; }
+        .log div { padding: 2px 0; border-bottom: 1px solid #1a2a3a; }
+        .log .time { color: #666; }
+        .log .event { color: #0cf; }
+        input { background: #0e1a30; border: 1px solid #234; color: #eee; padding: 8px 12px; border-radius: 4px; width: 300px; }
+        button { background: #0f9; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>⚽ Live Odds</h1>
+    <div class="status disconnected" id="status">Disconnected</div>
+    <div style="margin: 15px 0;">
+        <input id="matchId" value="sr:sport_event_id:67644872" placeholder="Match ID">
+        <button onclick="subscribe()">Subscribe</button>
+    </div>
+    <div class="odds-container" id="odds"></div>
+    <div class="log" id="log"></div>
+
+    <script>
+        let ws;
+        const oddsEl = document.getElementById('odds');
+        const logEl = document.getElementById('log');
+        const statusEl = document.getElementById('status');
+
+        function connect() {
+            ws = new WebSocket('ws://WebSoc-NLB55-FBqc5kImJlPf-7f13f5caa3b8794f.elb.sa-east-1.amazonaws.com/ws');
+            ws.onopen = () => {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'status connected';
+                subscribe();
+            };
+            ws.onclose = () => {
+                statusEl.textContent = 'Disconnected - reconnecting...';
+                statusEl.className = 'status disconnected';
+                setTimeout(connect, 2000);
+            };
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                renderOdds(data);
+                addLog(data);
+            };
+        }
+
+        function subscribe() {
+            const matchId = document.getElementById('matchId').value;
+            if (ws && ws.readyState === 1) {
+                ws.send(JSON.stringify({ subscribe: matchId }));
+                addLog({ event: 'subscribed', match_id: matchId });
+            }
+        }
+
+        function renderOdds(update) {
+            let marketEl = document.getElementById('market-' + update.market);
+            if (!marketEl) {
+                marketEl = document.createElement('div');
+                marketEl.className = 'market';
+                marketEl.id = 'market-' + update.market;
+                oddsEl.appendChild(marketEl);
+            }
+            marketEl.innerHTML = `<h2>${update.market.toUpperCase()}</h2><div class="outcomes">${
+                update.outcomes.map(o => `<div class="outcome flash" id="o-${update.market}-${o.name}">
+                    <div class="name">${o.name}</div>
+                    <div class="odds">${o.odds.toFixed(2)}</div>
+                </div>`).join('')
+            }</div>`;
+            setTimeout(() => marketEl.querySelectorAll('.outcome').forEach(el => el.classList.remove('flash')), 300);
+        }
+
+        function addLog(data) {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.innerHTML = `<span class="time">${time}</span> <span class="event">${JSON.stringify(data)}</span>`;
+            logEl.prepend(div);
+            if (logEl.children.length > 100) logEl.lastChild.remove();
+        }
+
+        connect();
+    </script>
+</body>
+</html>

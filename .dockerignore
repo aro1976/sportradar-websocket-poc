@@ -1,0 +1,8 @@
+infra/
+cdk.out/
+.git/
+node_modules/
+loadtest/
+grafana/
+*.md
+index.html
